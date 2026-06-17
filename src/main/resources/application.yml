@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: BookShop
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shop_db
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.example.bookshop: DEBUG
+    org.hibernate.SQL: DEBUG
