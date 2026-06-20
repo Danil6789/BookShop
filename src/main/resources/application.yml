@@ -3,9 +3,9 @@ spring:
     name: BookShop
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/shop_db
-    username: postgres
-    password: admin
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: secret
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -28,6 +28,10 @@ spring:
       max-file-size: 5MB
       max-request-size: 5MB
 
+  security:
+    user:
+      name: admin
+      password: admin
 
 server:
   port: 8080
@@ -37,3 +41,4 @@ logging:
     root: INFO
     org.example.bookshop: DEBUG
     org.hibernate.SQL: DEBUG
+    org.flywaydb: DEBUG

@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Замечание о режиме:** Пользователь просил сохранить в `plan.md`, но активен plan-mode и разрешено редактировать только этот файл плана. После одобрения плана можно будет сохранить копию в `C:\Spring\BookShop\plan.md` при реализации.
+> **Статус по дням:** День 1 — ✅ завершён (см. блок в конце Дня 1). День 2+ — в работе.
 
 ---
 
@@ -291,6 +291,22 @@ uploads/
 7. `git commit -m "chore: configure postgres, flyway, base error handling"`.
 
 **Проверка конца дня:** `./gradlew test` зелёный. `curl http://localhost:8080/actuator/health` → `{"status":"UP"}`.
+
+### ✅ День 1 — статус: ЗАВЕРШЁН (2026-06-20)
+
+**Что сделано сверх плана:**
+- Backend стартует, Flyway применяет V1 + V2, Hibernate validate проходит
+- 7 entities + 6 repositories в пакетах user/catalog/cart/order
+- Лог: `Started BookShopApplication in 19.476 seconds`
+- Компактная сводка: `code.md` в корне проекта
+
+**Отклонения от исходного плана Дня 1:**
+- ❌ `GlobalExceptionHandler` — НЕ сделан (перенесён в День 6)
+- ❌ `application.properties` → `application.yml` (используется YAML)
+- ❌ `compose.yaml` → `docker-compose.yaml` (legacy v1 формат)
+- ⚠️ `spring-boot-docker-compose` удалён из `build.gradle` (конфликт с нативным PostgreSQL 16 на порту 5432). БД поднимается руками: `docker compose up -d postgres`
+- ⚠️ `spring-boot-flyway` добавлен отдельной зависимостью (в Spring Boot 4.x это не автоконфиг, а отдельный модуль)
+- ⚠️ Плагины `org.hibernate.orm` и `org.graalvm.buildtools.native` удалены — ломали Flyway в JVM-режиме
 
 ---
 

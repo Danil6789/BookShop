@@ -17,6 +17,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Frontend:** Angular 17 standalone + Bootstrap 5 (планируется, папка `bookshop-frontend/`)
 - **Тесты:** JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend)
 
+## Субагенты
+
+При работе с проектом BookShop используй специализированных субагентов из `C:\Users\sotni\.claude\agents\`. **Каждый субагент знает конвенции своего слоя** — это ускоряет работу и снижает количество ошибок.
+
+| Субагент | Когда звать | Пример задачи |
+|---|---|---|
+| `entity-agent` | Создание/изменение `@Entity` классов | "Добавь поле `email` в User" |
+| `repository-agent` | Создание `JpaRepository` или кастомных `@Query` | "Добавь поиск книг по диапазону цены" |
+| `service-agent` | Бизнес-логика, `@Transactional` | "Сервис оформления заказа со списанием stock" |
+| `controller-agent` | Создание REST эндпоинтов | "POST /api/books для админа" |
+| `dto-mapper-agent` | DTO records + ручные мапперы | "Создай BookDto и BookMapper" |
+| `security-agent` | Spring Security, JWT, BCrypt, CORS | "Настрой SecurityFilterChain" |
+| `migration-agent` | Flyway V*__*.sql миграции | "Добавь таблицу reviews" |
+| `test-agent` | JUnit 5 + Mockito + Testcontainers | "Тест OrderService.create" |
+
+**Как звать:** просто опиши задачу — Claude Code сам выберет подходящего субагента по его `description`. Если нужно принудительно — назови агента явно: «Используй entity-agent чтобы…».
+
+### Когда какой агент использовать
+
+- **Меняю БД (добавляю колонку, новую таблицу)** → сначала `migration-agent` (V3__*.sql), потом `entity-agent` (обновить @Entity), потом `repository-agent` (новые методы).
+- **Делаю новый эндпоинт** → `dto-mapper-agent` (Request/Response + Mapper) → `service-agent` (бизнес-логика) → `controller-agent` (REST).
+- **Подключаю авторизацию** → `security-agent` (SecurityConfig + JwtService + Filter).
+- **Пишу тесты** → `test-agent` (unit + integration с Testcontainers).
+
 ## Команды
 
 Все команды выполняются из корня проекта.
