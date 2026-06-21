@@ -8,6 +8,8 @@ import org.example.bookshop.exception.catalog.BookNotFoundException;
 import org.example.bookshop.exception.catalog.CategoryAlreadyExistsException;
 import org.example.bookshop.exception.catalog.CategoryHasBooksException;
 import org.example.bookshop.exception.catalog.CategoryNotFoundException;
+import org.example.bookshop.exception.order.EmptyCartException;
+import org.example.bookshop.exception.order.InsufficientStockException;
 import org.example.bookshop.exception.user.UsernameAlreadyTakenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,6 +95,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BookInActiveOrdersException.class)
     public ResponseEntity<ApiError> handleBookInActiveOrders(BookInActiveOrdersException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(EmptyCartException.class)
+    public ResponseEntity<ApiError> handleEmptyCart(EmptyCartException ex, HttpServletRequest req) {
+        return ResponseEntity.badRequest()
+            .body(ApiError.of(400, "Bad Request", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiError> handleInsufficientStock(InsufficientStockException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
     }

@@ -17,4 +17,6 @@ public final class ApiPath {
     public static final String CART_URL = "/api/cart";
     public static final String CART_ITEMS_URL = "/items";
     public static final String CART_ITEM_BY_BOOK_ID_URL = "/items/{bookId}";
+
+    public static final String ORDERS_URL = "/api/orders";
 }
