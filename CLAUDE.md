@@ -107,7 +107,8 @@ BookShopApplication.java
 - ✅ Cart endpoints + service — Day 4 Part 1
 - ✅ Admin write для books/categories (POST/PUT/DELETE) — Day 4 Part 2
 - ✅ Order checkout (POST /api/orders) со списанием stock — Day 5
-- 📌 Order list/detail/cancel (GET /api/orders, GET /api/orders/{id}, PATCH status) — Day 6
+- ✅ Order list/detail/cancel/status (GET, GET by id, PATCH, DELETE) — Day 6
+- 📌 Observability (RequestLoggingFilter, логирование) — Day 6 (rescheduled)
 - 📌 Frontend Angular 17 — Day 8-10
 
 ## Файлы, которые не трогаем

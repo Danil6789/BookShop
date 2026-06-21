@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён (см. блок в конце Дня 2). День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5+ — в работе.
+> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён. День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5 (Order checkout) — ✅ завершён. День 6 (Order list/detail/cancel/status) — ✅ завершён. День 7+ — в работе.
 
 ---
 
@@ -476,6 +476,25 @@ uploads/
 4. `git commit -m "chore: tests, observability, request logging"`.
 
 **Проверка:** Swagger UI открывается, в логах видны запросы с `requestId`.
+
+---
+
+### ✅ День 6 (Order list/detail/cancel/status) — статус: ЗАВЕРШЁН (2026-06-21)
+
+**Что сделано (вместо исходного плана Day 6 — переориентировали на Order API):**
+- **Endpoints:** GET /api/orders (USER→свои, ADMIN→все), GET /api/orders/{id} (403 на чужой), PATCH /api/orders/{id}/status (ADMIN only), DELETE /api/orders/{id} (USER свой/ADMIN любой, только PENDING, restock)
+- **Exceptions:** OrderNotFoundException (404), OrderAccessDeniedException (403), OrderNotCancellableException (409)
+- **Service:** getUserOrders/getAllOrders/getOrderById с явной auth-проверкой (USER — свой, ADMIN — всё); updateStatus с ADMIN-check; cancelOrder с restock loop
+- **DTO:** UpdateStatusRequest (@NotNull OrderStatus)
+- **Тесты:** 20 unit (OrderServiceTest) + 16 integration (OrderControllerIntegrationTest) = **132 tests зелёные**, smoke-test 8/8 пройден
+- **Архитектурные решения:**
+  1. **Ролевой контракт через service, не SecurityConfig** — `.anyRequest().authenticated()` остаётся, авторизация в OrderService через `user.role == ADMIN` (Day 5-паттерн продолжен).
+  2. **DELETE = cancel** (REST-семантика: DELETE = отмена ресурса). Restock — побочный эффект.
+  3. **Cancel только PENDING** — PAID/SHIPPED/COMPLETED → 409. (PAID бы требовал refund flow — out of scope.)
+  4. **Без пагинации** (YAGNI) — `List<Order>`. Pageable добавим, если понадобится.
+  5. **Reuse OrderDto** для всех эндпоинтов — без отдельного OrderSummaryDto.
+
+**Гэп с исходным планом:** Изначальный план Дня 6 (observability, RequestLoggingFilter, логирование) — перенесён. Решили закрыть Order API полностью, observability — позже.
 
 ---
 
