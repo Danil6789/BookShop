@@ -16,19 +16,8 @@ public class BookRequest {
     @Size(max = 255)
     private String title;
 
-    @NotBlank
-    @Size(max = 255)
-    private String author;
-
-    @NotBlank
-    @Size(max = 20)
-    private String isbn;
-
     @Size(max = 2000)
     private String description;
-
-    @Size(max = 500)
-    private String coverUrl;
 
     @NotNull
     @Positive
@@ -36,7 +25,10 @@ public class BookRequest {
 
     @NotNull
     @PositiveOrZero
-    private Integer stockQuantity;
+    private Integer stock;
+
+    @Size(max = 500)
+    private String coverUrl;
 
     private Long categoryId;
 }
