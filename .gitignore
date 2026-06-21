@@ -39,10 +39,5 @@ out/
 # Gradle bootRun log artifacts
 bootRun*.log
 
-### Angular (bookshop-frontend) ###
-bookshop-frontend/node_modules/
-bookshop-frontend/dist/
-bookshop-frontend/.angular/
-
 ### Plans (per superpowers:writing-plans skill, kept locally only) ###
 docs/superpowers/
