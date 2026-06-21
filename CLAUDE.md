@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **JWT role invariant:** `JwtService` хранит role **без** `ROLE_` префикса, фильтр добавляет `ROLE_` сам. `.hasRole("ADMIN")` работает корректно. Не ломай этот контракт.
 - **Не редактируй применённые миграции** (V1, V2) — пиши новую `V{N+1}__*.sql`.
 - **API доки:** Swagger UI на `http://localhost:8080/swagger-ui/index.html` (НЕ `/swagger-ui.html`).
-- **День 1-2 ✅, День 3 📌** (каталог read endpoints) — см. `plan.md` status block.
+- **День 1-4 Part 1 ✅, День 4 Part 2 📌** (admin write для books/categories) — см. `plan.md` status block.
 
 ## Стек
 
@@ -103,8 +103,9 @@ BookShopApplication.java
 
 - ✅ Spring Security (JWT, BCrypt, CORS) — Day 2
 - ✅ `GlobalExceptionHandler` для auth ошибок
-- 📌 REST-контроллеры каталога (GET /api/categories, GET /api/books) — **Day 3**
-- 📌 Cart endpoints + service — Day 4
+- ✅ REST-контроллеры каталога (GET /api/categories, GET /api/books) — Day 3
+- ✅ Cart endpoints + service — Day 4 Part 1
+- 📌 Admin write для books/categories (POST/PUT/DELETE) — Day 4 Part 2
 - 📌 Order checkout со списанием stock — Day 5-6
 - 📌 Frontend Angular 17 — Day 8-10
 

@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён (см. блок в конце Дня 2). День 3+ — в работе.
+> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён (см. блок в конце Дня 2). День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) + День 5+ — в работе.
 
 ---
 
@@ -339,8 +339,6 @@ uploads/
 
 **Проверка:** через `curl` или Postman — register, login, получить токен, вызвать `/api/auth/me` с заголовком.
 
----
-
 ### ✅ День 2 — статус: ЗАВЕРШЁН (2026-06-21)
 
 **Что сделано:**
@@ -386,6 +384,43 @@ uploads/
 4. Контроллеры: `@RestController @RequestMapping("/api/books") @RequiredArgsConstructor`.
 5. Интеграционный тест: GET `/api/books` возвращает 6 книг из seed, GET `/api/books/search?categoryId=1` фильтрует, GET `/api/books/999` → 404.
 6. `git commit -m "feat(catalog): public read endpoints for categories and books"`.
+
+---
+
+### ✅ День 3 — статус: ЗАВЕРШЁН (2026-06-21)
+
+**Что сделано:**
+- **Entities:** `Category` (id, name UNIQUE) + `Book` (id, title, description, price NUMERIC(10,2), stock, coverUrl, @ManyToOne(LAZY) Category) — стандартные Lombok-аннотации
+- **Repositories:** `CategoryRepository` + `BookRepository extends JpaRepository, JpaSpecificationExecutor` (Specification API вместо JPQL — обход бага PostgreSQL с nullable String параметром)
+- **DTO + MapStruct:** `CategoryDto`, `BookDto` (+ categoryId/categoryName через expression), `BookFilterRequest`, `PageResponse<T>` — `CategoryMapper` + `BookMapper` как MapStruct интерфейсы (`componentModel=SPRING, unmappedTargetPolicy=IGNORE`)
+- **Services:** `CategoryService.findAll/findById` + `BookService.findById/search(filters, pageable)` с динамической Specification (только ненулевые фильтры → predicate)
+- **Controllers:** `CategoryApi` (GET /, GET /{id}) + `BookApi` (GET /, GET /{id}, GET /search) — Api+Impl split, Swagger аннотации
+- **Gotcha:** `@ModelAttribute` на nullable DTO через Api+Impl split не биндит query params → переход на `@RequestParam(required = false)` на каждом поле
+- **Тесты:** 4 unit (`BookServiceTest` с Mockito) + 9 integration (`BookControllerIntegrationTest` + `CategoryControllerIntegrationTest` с Testcontainers, ~37s) = **13 тестов, BUILD SUCCESSFUL**
+- **Smoke-test:** `GET /api/books` → 8 книг, `GET /api/books/1` → Мастер и Маргарита, `GET /api/books/search?q=мастер` → фильтрованный список, без auth работает (public)
+
+**Архитектурные решения:**
+- ✅ MapStruct пересмотрен в пользу ручных мапперов → затем обратно на MapStruct (user явно попросил) — финальный вариант: MapStruct для всех слоёв
+- ⚠️ DTO стиль остался `@Data` class (НЕ record) — единообразно с auth-модулем
+
+---
+
+### ✅ День 4 Part 1 (Cart) — статус: ЗАВЕРШЁН (2026-06-21)
+
+**Что сделано:**
+- **DTO:** `CartDto` (items + totalQuantity + totalPrice) + `CartItemDto` (bookId, title, coverUrl, price, quantity, subtotal) + `AddToCartRequest` (`@NotNull @Min(1)`) + `UpdateCartItemRequest` (`@NotNull @Min(1)`) — все `@Data @AllArgsConstructor`
+- **Mapper:** `CartItemMapper` через MapStruct с expression для `subtotal = price × quantity` через `BigDecimal.multiply`
+- **Service:** `CartService` с 5 методами — `getCurrentCart(User)` (агрегаты), `addItem(User, AddToCartRequest)` (UPSERT), `updateQuantity(User, bookId, qty)` (set exact), `removeItem(User, bookId)`, `clearCart(User)` — `@Transactional` (override readOnly=true)
+- **Exceptions:** `CartItemNotFoundException` (Russian: "Позиция с bookId=X не найдена в корзине") + handler в `GlobalExceptionHandler` → 404
+- **Helper:** `CurrentUserService.getCurrentUser(Authentication)` — ищет User по username из SecurityContext
+- **Security fix:** `AuthenticationEntryPoint` в `SecurityConfig` → 401 вместо дефолтного 403 (для неавторизованных запросов)
+- **Controller:** `CartApi` (5 endpoints с @Tag "Корзина" + Swagger) + `CartController` impl (Authentication параметр с `@Parameter(hidden = true)`)
+- **ApiPath:** 3 новые константы — `CART_URL`, `CART_ITEMS_URL`, `CART_ITEM_BY_BOOK_ID_URL`
+- **Тесты:** 10 unit (`CartServiceTest` с Mockito + Mappers.getMapper) + 7 integration (`CartControllerIntegrationTest` + `AuthTestHelper` с Testcontainers) = **17 тестов, BUILD SUCCESSFUL**
+- **Smoke-test:** 10 curl-сценариев пройдены: пустая корзина → add bookId=1 qty=2 → add ещё 2 → totalQuantity=4, totalPrice=2600 → PATCH qty=10 → DELETE item → POST снова → DELETE all → GET пусто → no auth → 401
+
+**Что осталось в Дне 4:**
+- День 4 Part 2: Admin write для books/categories (POST/PUT/DELETE /api/books, /api/categories) с `@PreAuthorize("hasRole('ADMIN')")`
 
 ---
 
