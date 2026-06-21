@@ -10,6 +10,9 @@ import org.example.bookshop.exception.catalog.CategoryHasBooksException;
 import org.example.bookshop.exception.catalog.CategoryNotFoundException;
 import org.example.bookshop.exception.order.EmptyCartException;
 import org.example.bookshop.exception.order.InsufficientStockException;
+import org.example.bookshop.exception.order.OrderAccessDeniedException;
+import org.example.bookshop.exception.order.OrderNotCancellableException;
+import org.example.bookshop.exception.order.OrderNotFoundException;
 import org.example.bookshop.exception.user.UsernameAlreadyTakenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -107,6 +110,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ApiError> handleInsufficientStock(InsufficientStockException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ApiError> handleOrderNotFound(OrderNotFoundException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiError.of(404, "Not Found", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(OrderAccessDeniedException.class)
+    public ResponseEntity<ApiError> handleOrderAccessDenied(OrderAccessDeniedException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ApiError.of(403, "Forbidden", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(OrderNotCancellableException.class)
+    public ResponseEntity<ApiError> handleOrderNotCancellable(OrderNotCancellableException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
     }
