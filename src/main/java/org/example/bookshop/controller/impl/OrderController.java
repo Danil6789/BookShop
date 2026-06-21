@@ -44,8 +44,9 @@ public class OrderController implements OrderApi {
     }
 
     @Override
-    public ResponseEntity<OrderDto> updateStatus(Long id, UpdateStatusRequest request) {
-        return ResponseEntity.ok(orderService.updateStatus(id, request.getStatus()));
+    public ResponseEntity<OrderDto> updateStatus(Authentication authentication, Long id, UpdateStatusRequest request) {
+        User user = currentUserService.getCurrentUser(authentication);
+        return ResponseEntity.ok(orderService.updateStatus(user, id, request.getStatus()));
     }
 
     @Override

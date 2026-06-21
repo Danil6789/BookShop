@@ -71,7 +71,8 @@ public interface OrderApi {
         @ApiResponse(responseCode = "403", description = "Требуется роль ADMIN"),
         @ApiResponse(responseCode = "404", description = "Заказ не найден")
     })
-    ResponseEntity<OrderDto> updateStatus(@PathVariable Long id,
+    ResponseEntity<OrderDto> updateStatus(@Parameter(hidden = true) Authentication authentication,
+                                          @PathVariable Long id,
                                           @Valid @RequestBody UpdateStatusRequest request);
 
     @DeleteMapping(ORDERS_BY_ID_URL)

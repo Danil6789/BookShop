@@ -112,8 +112,11 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDto updateStatus(Long orderId, OrderStatus newStatus) {
+    public OrderDto updateStatus(User user, Long orderId, OrderStatus newStatus) {
         log.debug("Update order id={} status to {}", orderId, newStatus);
+        if (user.getRole() != User.Role.ADMIN) {
+            throw new OrderAccessDeniedException();
+        }
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new OrderNotFoundException(orderId));
         order.setStatus(newStatus);

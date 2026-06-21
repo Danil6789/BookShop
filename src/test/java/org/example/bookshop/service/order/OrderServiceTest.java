@@ -315,6 +315,7 @@ class OrderServiceTest {
 
     @Test
     void updateStatus_existingOrder_updatesAndSaves() {
+        User admin = User.builder().id(1L).username("admin").role(User.Role.ADMIN).build();
         Book book = book(1L, "Мастер и Маргарита", "650.00");
         Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
             .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
@@ -323,7 +324,7 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        OrderDto result = service.updateStatus(1L, OrderStatus.PAID);
+        OrderDto result = service.updateStatus(admin, 1L, OrderStatus.PAID);
 
         assertThat(result.getStatus()).isEqualTo("PAID");
         verify(orderRepository).save(order);
@@ -331,9 +332,10 @@ class OrderServiceTest {
 
     @Test
     void updateStatus_missingOrder_throwsNotFound() {
+        User admin = User.builder().id(1L).username("admin").role(User.Role.ADMIN).build();
         when(orderRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.updateStatus(999L, OrderStatus.PAID))
+        assertThatThrownBy(() -> service.updateStatus(admin, 999L, OrderStatus.PAID))
             .isInstanceOf(OrderNotFoundException.class)
             .hasMessageContaining("999");
 
