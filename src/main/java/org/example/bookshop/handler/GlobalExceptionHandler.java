@@ -2,6 +2,8 @@ package org.example.bookshop.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.bookshop.dto.error.ApiError;
+import org.example.bookshop.exception.catalog.BookNotFoundException;
+import org.example.bookshop.exception.catalog.CategoryNotFoundException;
 import org.example.bookshop.exception.user.UsernameAlreadyTakenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,5 +55,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleIllegalArg(IllegalArgumentException ex, HttpServletRequest req) {
         return ResponseEntity.badRequest()
             .body(ApiError.of(400, "Bad Request", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(BookNotFoundException.class)
+    public ResponseEntity<ApiError> handleBookNotFound(BookNotFoundException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiError.of(404, "Not Found", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ApiError> handleCategoryNotFound(CategoryNotFoundException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiError.of(404, "Not Found", ex.getMessage(), req.getRequestURI()));
     }
 }
