@@ -439,30 +439,23 @@ uploads/
 
 ---
 
-### День 5 — Orders + транзакционная сборка
-**Цель:** можно оформить заказ из корзины, история заказов работает.
+### ✅ День 5 — Order checkout (POST /api/orders) — статус: ЗАВЕРШЁН (2026-06-21)
 
-Файлы:
-- `order/Order.java`, `OrderItem.java`
-- `order/OrderRepository.java`, `OrderItemRepository.java`
-- `order/dto/OrderDto.java`, `OrderItemDto.java`, `CreateOrderRequest.java`, `UpdateStatusRequest.java`
-- `order/OrderService.java`, `OrderController.java`
-- `common/exception/InsufficientStockException.java` (обрабатывается в `GlobalExceptionHandler` → 409)
-- Тесты: транзакционный сценарий «корзина → заказ» с проверкой списания `stock`, откат при ошибке, `status` flow
+8 коммитов: feat(order) EmptyCartException + InsufficientStockException + 400/409 handlers + ORDERS_URL ApiPath + feat(order) OrderDto/OrderItemDto + feat(order) OrderItemMapper/OrderMapper MapStruct (status.name() expression, items ignore — маппим вручную в сервисе через stream, чтобы не тянуть OrderItemMapper через uses= в @Spring-генерике) + feat(order) OrderService.checkout base + 5 unit + feat(order) stock validation (BEFORE save) + decrement (AFTER save) + clear cart (last) + 5 unit (10/10 unit) + feat(order) OrderApi+OrderController (POST /api/orders, @Parameter(hidden=true) Authentication, 201 Created) + test(order) OrderControllerIntegrationTest 7 кейсов (emptyCart 400, noAuth 401, validCart 201, clearsCart, decrementsBookStock, insufficientStock 409, capturesPriceAtPurchase). Endpoints: POST /api/orders — User, 201 OrderDto, 400 empty cart, 401 no auth, 409 insufficient stock. 103 tests total (все зелёные), smoke-test 7 сценариев пройден.
 
-Шаги:
-1. `Order` + `OrderItem` (one-to-many, каскад PERSIST, orphanRemoval).
-2. `OrderService.create(userId, shippingAddress)` — `@Transactional`:
-   - загрузить `cartItems` для user
-   - проверить `stock` по каждой книге (с `@Lock(PESSIMISTIC_WRITE)` через `findById` для защиты от гонки — **важно для конкурентности**)
-   - создать `Order` + список `OrderItem` с **замороженной ценой** (`book.getPrice()` на момент покупки)
-   - уменьшить `stock` на `quantity`
-   - удалить `cartItems`
-   - сохранить всё одной транзакцией
-3. `OrderService.cancel(orderId)` — ADMIN, возврат `stock` (если статус `NEW` или `PAID`).
-4. PATCH `/api/orders/{id}/status` — ADMIN.
-5. Тест: успешный заказ уменьшает stock, неуспешный (не хватает stock) — откат, корзина не тронута.
-6. `git commit -m "feat(order): checkout flow with transactional stock decrement"`.
+**Архитектурные решения:**
+1. Без request body — сервер сам читает корзину авторизованного user.
+2. Один `@Transactional` на весь checkout — атомарность.
+3. All-or-nothing на stock (1 книга не хватает → весь заказ откатывается, 409).
+4. Снапшот цены: `OrderItem.priceAtPurchase = book.price` на момент заказа.
+5. `Order.status = PENDING` (через `@PrePersist` уже есть в entity).
+6. `OrderItem.orders` — `cascade=ALL, orphanRemoval=true` (уже есть).
+7. LAZY book в OrderItem дёргаем в @Transactional.
+8. Cart clear через `cartItemRepository.deleteByUserId` (уже есть).
+9. Decrement stock после save order.
+10. НЕ createdAt в Day 5 (YAGNI, добавим в Day 6+).
+
+**Гэп с исходным планом:** В плане `findById` с `@Lock(PESSIMISTIC_WRITE)` — **отложено на Day 6** (PESSIMISTIC_WRITE требует доп. тестов и решения о стратегии транзакций). Текущая реализация полагается на default isolation, что для single-instance OK, но не для distributed.
 
 ---
 
