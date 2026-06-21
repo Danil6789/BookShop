@@ -41,6 +41,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Подключаю авторизацию** → `security-agent` (SecurityConfig + JwtService + Filter).
 - **Пишу тесты** → `test-agent` (unit + integration с Testcontainers).
 
+## Когда использовать Plan Agent
+
+### ✅ ОБЯЗАТЕЛЬНО используй Plan Agent для:
+
+1. **Новые модули/фичи** (Security, Payment, Email)
+2. **Изменения архитектуры** (добавление кеша, очередей)
+3. **Интеграции** (внешние API, библиотеки)
+4. **Миграции данных** (изменение схемы с существующими данными)
+5. **Multi-step tasks** (требуется >3 файлов)
+
+### ❌ Можно пропустить Plan Agent для:
+
+1. **Typo fixes** (исправление опечаток)
+2. **Single-line changes** (изменение одной строки)
+3. **Simple renames** (переименование переменной)
+4. **Adding logs** (добавление логирования без логики)
+
 ## Команды
 
 Все команды выполняются из корня проекта.
