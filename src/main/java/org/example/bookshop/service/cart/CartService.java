@@ -8,6 +8,7 @@ import org.example.bookshop.dto.cart.CartItemDto;
 import org.example.bookshop.entity.Book;
 import org.example.bookshop.entity.CartItem;
 import org.example.bookshop.entity.User;
+import org.example.bookshop.exception.cart.CartItemNotFoundException;
 import org.example.bookshop.exception.catalog.BookNotFoundException;
 import org.example.bookshop.mapper.CartItemMapper;
 import org.example.bookshop.repository.BookRepository;
@@ -68,5 +69,33 @@ public class CartService {
 
         CartItem saved = cartItemRepository.save(item);
         return cartItemMapper.toDto(saved);
+    }
+
+    @Transactional
+    public CartItemDto updateQuantity(User user, Long bookId, Integer quantity) {
+        log.debug("Updating quantity for book={} to {} for user={}", bookId, quantity, user.getId());
+
+        CartItem item = cartItemRepository.findByUserIdAndBookId(user.getId(), bookId)
+            .orElseThrow(() -> new CartItemNotFoundException(bookId));
+
+        item.setQuantity(quantity);
+        CartItem saved = cartItemRepository.save(item);
+        return cartItemMapper.toDto(saved);
+    }
+
+    @Transactional
+    public void removeItem(User user, Long bookId) {
+        log.debug("Removing book={} from cart for user={}", bookId, user.getId());
+
+        CartItem item = cartItemRepository.findByUserIdAndBookId(user.getId(), bookId)
+            .orElseThrow(() -> new CartItemNotFoundException(bookId));
+
+        cartItemRepository.delete(item);
+    }
+
+    @Transactional
+    public void clearCart(User user) {
+        log.debug("Clearing cart for user={}", user.getId());
+        cartItemRepository.deleteByUserId(user.getId());
     }
 }

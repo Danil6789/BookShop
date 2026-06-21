@@ -6,6 +6,7 @@ import org.example.bookshop.dto.cart.CartItemDto;
 import org.example.bookshop.entity.Book;
 import org.example.bookshop.entity.CartItem;
 import org.example.bookshop.entity.User;
+import org.example.bookshop.exception.cart.CartItemNotFoundException;
 import org.example.bookshop.exception.catalog.BookNotFoundException;
 import org.example.bookshop.mapper.CartItemMapper;
 import org.example.bookshop.repository.BookRepository;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,6 +130,59 @@ class CartServiceTest {
         assertThatThrownBy(() -> service.addItem(ivan, req))
             .isInstanceOf(BookNotFoundException.class)
             .hasMessageContaining("999");
+    }
+
+    @Test
+    void updateQuantity_existing_setsNewQuantity() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        CartItem existing = CartItem.builder().id(50L).user(ivan).book(book).quantity(3).build();
+        when(cartItemRepository.findByUserIdAndBookId(2L, 1L)).thenReturn(Optional.of(existing));
+        when(cartItemRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CartItemDto result = service.updateQuantity(ivan, 1L, 10);
+
+        assertThat(result.getBookId()).isEqualTo(1L);
+        assertThat(result.getQuantity()).isEqualTo(10);
+        assertThat(result.getSubtotal()).isEqualByComparingTo(new BigDecimal("6500.00"));
+        verify(cartItemRepository).save(existing);
+    }
+
+    @Test
+    void updateQuantity_missing_throwsCartItemNotFoundException() {
+        when(cartItemRepository.findByUserIdAndBookId(2L, 999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateQuantity(ivan, 999L, 5))
+            .isInstanceOf(CartItemNotFoundException.class)
+            .hasMessageContaining("999");
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+    }
+
+    @Test
+    void removeItem_existing_deletesIt() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        CartItem existing = CartItem.builder().id(50L).user(ivan).book(book).quantity(3).build();
+        when(cartItemRepository.findByUserIdAndBookId(2L, 1L)).thenReturn(Optional.of(existing));
+
+        service.removeItem(ivan, 1L);
+
+        verify(cartItemRepository).delete(existing);
+    }
+
+    @Test
+    void removeItem_missing_throwsCartItemNotFoundException() {
+        when(cartItemRepository.findByUserIdAndBookId(2L, 999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.removeItem(ivan, 999L))
+            .isInstanceOf(CartItemNotFoundException.class)
+            .hasMessageContaining("999");
+        verify(cartItemRepository, never()).delete(any(CartItem.class));
+    }
+
+    @Test
+    void clearCart_deletesAllForUser() {
+        service.clearCart(ivan);
+
+        verify(cartItemRepository).deleteByUserId(2L);
     }
 
     private static Book book(Long id, String title, String price) {
