@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
     Page<Book> findByCategoryId(Long categoryId, Pageable pageable);
+
+    boolean existsByCategory_Id(Long categoryId);
 }
