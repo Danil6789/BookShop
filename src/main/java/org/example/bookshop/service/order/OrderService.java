@@ -10,6 +10,8 @@ import org.example.bookshop.entity.OrderItem;
 import org.example.bookshop.entity.User;
 import org.example.bookshop.exception.order.EmptyCartException;
 import org.example.bookshop.exception.order.InsufficientStockException;
+import org.example.bookshop.exception.order.OrderAccessDeniedException;
+import org.example.bookshop.exception.order.OrderNotFoundException;
 import org.example.bookshop.mapper.OrderItemMapper;
 import org.example.bookshop.mapper.OrderMapper;
 import org.example.bookshop.repository.BookRepository;
@@ -80,8 +82,36 @@ public class OrderService {
 
         cartItemRepository.deleteByUserId(user.getId());
 
-        OrderDto dto = orderMapper.toDto(saved);
-        dto.setItems(saved.getItems().stream().map(orderItemMapper::toDto).toList());
+        return toDto(saved);
+    }
+
+    public List<OrderDto> getUserOrders(User user) {
+        log.debug("List orders for user={}", user.getId());
+        return orderRepository.findByUserIdOrderByIdDesc(user.getId()).stream()
+            .map(this::toDto)
+            .toList();
+    }
+
+    public List<OrderDto> getAllOrders() {
+        log.debug("List all orders (admin)");
+        return orderRepository.findAllByOrderByIdDesc().stream()
+            .map(this::toDto)
+            .toList();
+    }
+
+    public OrderDto getOrderById(User user, Long orderId) {
+        log.debug("Get order id={} for user={}", orderId, user.getId());
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUser().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
+            throw new OrderAccessDeniedException();
+        }
+        return toDto(order);
+    }
+
+    private OrderDto toDto(Order order) {
+        OrderDto dto = orderMapper.toDto(order);
+        dto.setItems(order.getItems().stream().map(orderItemMapper::toDto).toList());
         return dto;
     }
 }

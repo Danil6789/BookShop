@@ -4,10 +4,13 @@ import org.example.bookshop.dto.order.OrderDto;
 import org.example.bookshop.entity.Book;
 import org.example.bookshop.entity.CartItem;
 import org.example.bookshop.entity.Order;
+import org.example.bookshop.entity.OrderItem;
 import org.example.bookshop.entity.OrderStatus;
 import org.example.bookshop.entity.User;
 import org.example.bookshop.exception.order.EmptyCartException;
 import org.example.bookshop.exception.order.InsufficientStockException;
+import org.example.bookshop.exception.order.OrderAccessDeniedException;
+import org.example.bookshop.exception.order.OrderNotFoundException;
 import org.example.bookshop.mapper.OrderItemMapper;
 import org.example.bookshop.mapper.OrderMapper;
 import org.example.bookshop.repository.BookRepository;
@@ -22,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -231,6 +235,81 @@ class OrderServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("PENDING");
         assertThat(book.getStock()).isEqualTo(0);
+    }
+
+    @Test
+    void getUserOrders_returnsUsersOrders() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order1 = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        order1.getItems().add(OrderItem.builder().order(order1).book(book).quantity(1)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        Order order2 = Order.builder().id(2L).user(ivan).totalAmount(new BigDecimal("1300.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        when(orderRepository.findByUserIdOrderByIdDesc(2L)).thenReturn(List.of(order1, order2));
+
+        List<OrderDto> result = service.getUserOrders(ivan);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getId()).isEqualTo(1L);
+        assertThat(result.get(1).getId()).isEqualTo(2L);
+        verify(orderRepository).findByUserIdOrderByIdDesc(2L);
+    }
+
+    @Test
+    void getAllOrders_returnsAllOrders() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order1 = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        Order order2 = Order.builder().id(2L).user(ivan).totalAmount(new BigDecimal("1300.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        Order order3 = Order.builder().id(3L).user(ivan).totalAmount(new BigDecimal("850.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        when(orderRepository.findAllByOrderByIdDesc()).thenReturn(List.of(order1, order2, order3));
+
+        List<OrderDto> result = service.getAllOrders();
+
+        assertThat(result).hasSize(3);
+        verify(orderRepository).findAllByOrderByIdDesc();
+    }
+
+    @Test
+    void getOrderById_ownOrder_returnsDto() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        order.getItems().add(OrderItem.builder().order(order).book(book).quantity(1)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        OrderDto result = service.getOrderById(ivan, 1L);
+
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(result.getItems()).hasSize(1);
+    }
+
+    @Test
+    void getOrderById_otherUserOrder_throwsAccessDenied() {
+        User petr = User.builder().id(3L).username("petr").role(User.Role.USER).build();
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        order.getItems().add(OrderItem.builder().order(order).book(book).quantity(1)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> service.getOrderById(petr, 1L))
+            .isInstanceOf(OrderAccessDeniedException.class);
+    }
+
+    @Test
+    void getOrderById_missingOrder_throwsNotFound() {
+        when(orderRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getOrderById(ivan, 999L))
+            .isInstanceOf(OrderNotFoundException.class)
+            .hasMessageContaining("999");
     }
 
     private static Book book(Long id, String title, String price) {
