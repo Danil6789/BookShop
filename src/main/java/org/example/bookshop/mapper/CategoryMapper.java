@@ -2,16 +2,12 @@ package org.example.bookshop.mapper;
 
 import org.example.bookshop.dto.catalog.CategoryDto;
 import org.example.bookshop.entity.Category;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.ReportingPolicy;
 
-public final class CategoryMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface CategoryMapper {
 
-    private CategoryMapper() {
-    }
-
-    public static CategoryDto toDto(Category category) {
-        if (category == null) {
-            return null;
-        }
-        return new CategoryDto(category.getId(), category.getName());
-    }
+    CategoryDto toDto(Category category);
 }

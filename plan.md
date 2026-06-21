@@ -374,7 +374,7 @@ uploads/
 - `catalog/Category.java`, `Book.java`
 - `catalog/CategoryRepository.java`, `BookRepository.java` (+ кастомный `findByFilters(...)`)
 - `catalog/dto/*` — `CategoryDto`, `BookDto`, `BookFilterRequest`
-- `catalog/mapper/*` (через MapStruct, либо ручные мапперы — **выбираем ручные** для скорости и отсутствия конфигурации)
+- `catalog/mapper/*` — через **MapStruct** (`@Mapper` интерфейсы, Spring component) для type safety и автогенерации
 - `catalog/CategoryService.java`, `BookService.java`
 - `catalog/CategoryController.java`, `BookController.java`
 - Тесты: `BookServiceTest` (mock repos), `BookControllerIntegrationTest` (Testcontainers, без авторизации — GET публичный)
@@ -583,7 +583,7 @@ uploads/
 - *Spring Modulith* (уже подключён) — переусложнение для 10 дней; оставляем зависимость, но не используем.
 - *GraphQL* — для книжного магазина REST достаточно, GraphQL добавляет 1–2 дня.
 - *Keycloak* для auth — избыточно, свой JWT-фильтр за полдня.
-- *MapStruct* — ручные мапперы читаемее на малом числе полей.
+- *MapStruct* — ручные мапперы читаемее на малом числе полей. *(отклонено: пересмотрели в пользу MapStruct для type safety — автогенерация исключает целый класс ошибок маппинга)*
 
 ---
 

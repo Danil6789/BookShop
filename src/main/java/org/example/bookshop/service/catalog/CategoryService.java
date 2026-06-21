@@ -16,10 +16,11 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository repository;
+    private final CategoryMapper categoryMapper;
 
     public List<CategoryDto> findAll() {
         return repository.findAll(Sort.by("name")).stream()
-            .map(CategoryMapper::toDto)
+            .map(categoryMapper::toDto)
             .toList();
     }
 }

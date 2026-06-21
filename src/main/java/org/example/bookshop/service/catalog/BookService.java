@@ -26,11 +26,12 @@ import java.util.ArrayList;
 public class BookService {
 
     private final BookRepository repository;
+    private final BookMapper bookMapper;
 
     public BookDto findById(Long id) {
         Book book = repository.findById(id)
             .orElseThrow(() -> new BookNotFoundException(id));
-        return BookMapper.toDto(book);
+        return bookMapper.toDto(book);
     }
 
     public PageResponse<BookDto> search(BookFilterRequest filter, Pageable pageable) {
@@ -57,6 +58,6 @@ public class BookService {
         };
 
         Page<Book> page = repository.findAll(spec, pageable);
-        return PageResponse.from(page, BookMapper::toDto);
+        return PageResponse.from(page, bookMapper::toDto);
     }
 }

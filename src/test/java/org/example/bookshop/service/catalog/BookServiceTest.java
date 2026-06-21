@@ -6,10 +6,12 @@ import org.example.bookshop.dto.catalog.PageResponse;
 import org.example.bookshop.entity.Book;
 import org.example.bookshop.entity.Category;
 import org.example.bookshop.exception.catalog.BookNotFoundException;
+import org.example.bookshop.mapper.BookMapper;
 import org.example.bookshop.repository.BookRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -32,7 +34,13 @@ import static org.mockito.Mockito.when;
 class BookServiceTest {
 
     @Mock private BookRepository repository;
-    @InjectMocks private BookService service;
+    private final BookMapper bookMapper = Mappers.getMapper(BookMapper.class);
+    private BookService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new BookService(repository, bookMapper);
+    }
 
     @Test
     void findById_existingBook_returnsDto() {
@@ -75,6 +83,7 @@ class BookServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("Мастер и Маргарита");
+        assertThat(result.getContent().get(0).getCategoryName()).isEqualTo("Художественная литература");
         verify(repository).findAll(any(Specification.class), any(Pageable.class));
     }
 
@@ -93,6 +102,7 @@ class BookServiceTest {
 
         assertThat(result.getTotalElements()).isEqualTo(2);
         assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).getCategoryName()).isEqualTo("Cat 1");
     }
 
     private static Book bookWithCategory(Long id, String title, BigDecimal price, Long catId, String catName) {
