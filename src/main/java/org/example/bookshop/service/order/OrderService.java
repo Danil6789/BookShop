@@ -9,6 +9,7 @@ import org.example.bookshop.entity.Order;
 import org.example.bookshop.entity.OrderItem;
 import org.example.bookshop.entity.User;
 import org.example.bookshop.exception.order.EmptyCartException;
+import org.example.bookshop.exception.order.InsufficientStockException;
 import org.example.bookshop.mapper.OrderItemMapper;
 import org.example.bookshop.mapper.OrderMapper;
 import org.example.bookshop.repository.BookRepository;
@@ -42,6 +43,13 @@ public class OrderService {
             throw new EmptyCartException();
         }
 
+        for (CartItem item : items) {
+            Book book = item.getBook();
+            if (book.getStock() < item.getQuantity()) {
+                throw new InsufficientStockException(book.getId(), item.getQuantity(), book.getStock());
+            }
+        }
+
         Order order = Order.builder()
             .user(user)
             .items(new ArrayList<>())
@@ -63,6 +71,15 @@ public class OrderService {
         order.setTotalAmount(total);
 
         Order saved = orderRepository.save(order);
+
+        for (CartItem item : items) {
+            Book book = item.getBook();
+            book.setStock(book.getStock() - item.getQuantity());
+            bookRepository.save(book);
+        }
+
+        cartItemRepository.deleteByUserId(user.getId());
+
         OrderDto dto = orderMapper.toDto(saved);
         dto.setItems(saved.getItems().stream().map(orderItemMapper::toDto).toList());
         return dto;

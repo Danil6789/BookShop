@@ -7,6 +7,7 @@ import org.example.bookshop.entity.Order;
 import org.example.bookshop.entity.OrderStatus;
 import org.example.bookshop.entity.User;
 import org.example.bookshop.exception.order.EmptyCartException;
+import org.example.bookshop.exception.order.InsufficientStockException;
 import org.example.bookshop.mapper.OrderItemMapper;
 import org.example.bookshop.mapper.OrderMapper;
 import org.example.bookshop.repository.BookRepository;
@@ -140,6 +141,96 @@ class OrderServiceTest {
             .isEqualByComparingTo(new BigDecimal("650.00"));
         assertThat(result.getItems().get(0).getSubtotal())
             .isEqualByComparingTo(new BigDecimal("1950.00"));
+    }
+
+    @Test
+    void checkout_insufficientStock_throwsInsufficientStock() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        book.setStock(2);
+        CartItem item = CartItem.builder().id(10L).user(ivan).book(book).quantity(5).build();
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(item));
+
+        assertThatThrownBy(() -> service.checkout(ivan))
+            .isInstanceOf(InsufficientStockException.class)
+            .hasMessageContaining("id=1")
+            .hasMessageContaining("запрошено 5")
+            .hasMessageContaining("доступно 2");
+
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(bookRepository, never()).save(any(Book.class));
+        verify(cartItemRepository, never()).deleteByUserId(any());
+    }
+
+    @Test
+    void checkout_validCart_decrementsBookStock() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        book.setStock(10);
+        CartItem item = CartItem.builder().id(10L).user(ivan).book(book).quantity(3).build();
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(item));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+            Order arg = inv.getArgument(0);
+            arg.setId(100L);
+            arg.setStatus(OrderStatus.PENDING);
+            return arg;
+        });
+
+        service.checkout(ivan);
+
+        assertThat(book.getStock()).isEqualTo(7);
+        verify(bookRepository).save(book);
+    }
+
+    @Test
+    void checkout_validCart_clearsCart() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        CartItem item = CartItem.builder().id(10L).user(ivan).book(book).quantity(1).build();
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(item));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+            Order arg = inv.getArgument(0);
+            arg.setId(100L);
+            arg.setStatus(OrderStatus.PENDING);
+            return arg;
+        });
+
+        service.checkout(ivan);
+
+        verify(cartItemRepository).deleteByUserId(2L);
+    }
+
+    @Test
+    void checkout_multipleItems_validatesAllStockFirst() {
+        Book book1 = book(1L, "Мастер и Маргарита", "650.00");
+        book1.setStock(10);
+        Book book2 = book(2L, "1984", "550.00");
+        book2.setStock(2);
+        CartItem item1 = CartItem.builder().id(10L).user(ivan).book(book1).quantity(2).build();
+        CartItem item2 = CartItem.builder().id(11L).user(ivan).book(book2).quantity(5).build();
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(item1, item2));
+
+        assertThatThrownBy(() -> service.checkout(ivan))
+            .isInstanceOf(InsufficientStockException.class)
+            .hasMessageContaining("id=2");
+
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void checkout_stockEqualsQuantity_succeeds() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        book.setStock(3);
+        CartItem item = CartItem.builder().id(10L).user(ivan).book(book).quantity(3).build();
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(item));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+            Order arg = inv.getArgument(0);
+            arg.setId(100L);
+            arg.setStatus(OrderStatus.PENDING);
+            return arg;
+        });
+
+        OrderDto result = service.checkout(ivan);
+
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(book.getStock()).isEqualTo(0);
     }
 
     private static Book book(Long id, String title, String price) {
