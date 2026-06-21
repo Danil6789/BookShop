@@ -3,7 +3,10 @@ package org.example.bookshop.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.bookshop.dto.error.ApiError;
 import org.example.bookshop.exception.cart.CartItemNotFoundException;
+import org.example.bookshop.exception.catalog.BookInActiveOrdersException;
 import org.example.bookshop.exception.catalog.BookNotFoundException;
+import org.example.bookshop.exception.catalog.CategoryAlreadyExistsException;
+import org.example.bookshop.exception.catalog.CategoryHasBooksException;
 import org.example.bookshop.exception.catalog.CategoryNotFoundException;
 import org.example.bookshop.exception.user.UsernameAlreadyTakenException;
 import org.springframework.http.HttpStatus;
@@ -74,5 +77,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleCartItemNotFound(CartItemNotFoundException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(ApiError.of(404, "Not Found", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(CategoryAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleCategoryAlreadyExists(CategoryAlreadyExistsException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(CategoryHasBooksException.class)
+    public ResponseEntity<ApiError> handleCategoryHasBooks(CategoryHasBooksException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(BookInActiveOrdersException.class)
+    public ResponseEntity<ApiError> handleBookInActiveOrders(BookInActiveOrdersException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError.of(409, "Conflict", ex.getMessage(), req.getRequestURI()));
     }
 }

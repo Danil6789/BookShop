@@ -9,6 +9,7 @@ public final class ApiPath {
     public static final String AUTH_LOGIN_URL = "/login";
 
     public static final String CATEGORIES_URL = "/api/categories";
+    public static final String CATEGORIES_BY_ID_URL = "/{id}";
     public static final String BOOKS_URL = "/api/books";
     public static final String BOOKS_BY_ID_URL = "/{id}";
     public static final String BOOKS_SEARCH_URL = "/search";
