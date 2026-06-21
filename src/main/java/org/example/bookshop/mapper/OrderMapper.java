@@ -8,10 +8,10 @@ import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-    unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    uses = OrderItemMapper.class)
+    unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface OrderMapper {
 
     @Mapping(target = "status", expression = "java(order.getStatus().name())")
+    @Mapping(target = "items", ignore = true)
     OrderDto toDto(Order order);
 }
