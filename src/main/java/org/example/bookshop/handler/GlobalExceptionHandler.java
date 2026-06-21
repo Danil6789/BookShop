@@ -2,6 +2,7 @@ package org.example.bookshop.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.bookshop.dto.error.ApiError;
+import org.example.bookshop.exception.cart.CartItemNotFoundException;
 import org.example.bookshop.exception.catalog.BookNotFoundException;
 import org.example.bookshop.exception.catalog.CategoryNotFoundException;
 import org.example.bookshop.exception.user.UsernameAlreadyTakenException;
@@ -65,6 +66,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CategoryNotFoundException.class)
     public ResponseEntity<ApiError> handleCategoryNotFound(CategoryNotFoundException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiError.of(404, "Not Found", ex.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(CartItemNotFoundException.class)
+    public ResponseEntity<ApiError> handleCartItemNotFound(CartItemNotFoundException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(ApiError.of(404, "Not Found", ex.getMessage(), req.getRequestURI()));
     }
