@@ -1,4 +1,4 @@
-package org.example.bookshop.exception;
+package org.example.bookshop.dto.error;
 
 import java.time.Instant;
 import java.util.List;

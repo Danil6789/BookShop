@@ -1,6 +1,8 @@
-package org.example.bookshop.exception;
+package org.example.bookshop.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.example.bookshop.dto.error.ApiError;
+import org.example.bookshop.exception.user.UsernameAlreadyTakenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
