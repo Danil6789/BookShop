@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён (см. блок в конце Дня 2). День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) + День 5+ — в работе.
+> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён (см. блок в конце Дня 2). День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5+ — в работе.
 
 ---
 
@@ -420,27 +420,22 @@ uploads/
 - **Smoke-test:** 10 curl-сценариев пройдены: пустая корзина → add bookId=1 qty=2 → add ещё 2 → totalQuantity=4, totalPrice=2600 → PATCH qty=10 → DELETE item → POST снова → DELETE all → GET пусто → no auth → 401
 
 **Что осталось в Дне 4:**
-- День 4 Part 2: Admin write для books/categories (POST/PUT/DELETE /api/books, /api/categories) с `@PreAuthorize("hasRole('ADMIN')")`
+- ✅ День 4 Part 2: Admin write для books/categories — 8 порций завершены
 
 ---
 
-### День 4 — Catalog admin write + Cart
-**Цель:** админ может управлять книгами/категориями; пользователь управляет корзиной.
+### День 4 Part 2 — Catalog admin write (✅ завершён)
+**Цель:** админ может управлять книгами/категориями через REST.
 
-Файлы:
-- CRUD-операции в `CategoryService`/`BookService` (валидация, проверки уникальности, `existsBy` перед удалением)
-- `cart/CartItem.java`, `CartItemId.java` (composite PK через `@IdClass` ИЛИ встраиваемый `@EmbeddedId` — выбираем `@IdClass` для простоты), `CartItemRepository.java`
-- `cart/dto/CartDto.java`, `CartItemDto.java`, `AddToCartRequest.java`
-- `cart/CartService.java`, `CartController.java`
-- Тесты: админ-операции (создание/обновление/удаление книги), операции корзины (add/update/remove, пересчёт суммы)
-
-Шаги:
-1. `@PreAuthorize("hasRole('ADMIN')")` на admin-эндпоинтах (включить `@EnableMethodSecurity` в SecurityConfig).
-2. Проверка в `BookService.delete(id)`: кидать 409, если есть `OrderItem` с этим `bookId`.
-3. Корзина: `CartService.getCurrentCart(userId)` — если нет ни одной `CartItem` для пользователя, вернуть пустую.
-4. `CartService.addItem(userId, bookId, qty)` — `findByUserIdAndBookId`, если есть — `quantity += qty`, иначе новая. Проверка `stock`.
-5. Тест: пользователь A не видит корзину пользователя B; добавление сверх `stock` → 400.
-6. `git commit -m "feat(catalog,cart): admin write ops and cart management"`.
+**Что сделано:**
+- **Exceptions:** `CategoryAlreadyExistsException`, `CategoryHasBooksException`, `BookInActiveOrdersException` + 3 @ExceptionHandler (409 Conflict) в `GlobalExceptionHandler`
+- **DTO:** `CategoryRequest` (name) + `BookRequest` (title, description, price, stock, coverUrl, categoryId) с bean-validation
+- **Derived query:** `BookRepository.existsByCategory_Id` для проверки удаления категории
+- **Service:** `CategoryService` (create/update/delete) + `BookService` (create/update/delete) — `@Transactional` с проверками существования
+- **Controllers:** `CategoryApi` + `BookApi` — POST/PUT/DELETE с `@PreAuthorize("hasRole('ADMIN')")` и Swagger
+- **Конфликты 409:** name занят (category), категория с книгами, книга в заказах
+- **Тесты:** 9 unit CategoryService + 13 unit BookService (вкл. 9 новых admin) + 13 integration CategoryController + 17 integration BookController (вкл. 8 admin) = **52 теста, BUILD SUCCESSFUL**
+- **Smoke-test:** 13 сценариев пройдены (admin vs user 403, create/update/delete, дубликаты 409, валидация 400)
 
 ---
 

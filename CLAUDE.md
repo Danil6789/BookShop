@@ -105,7 +105,7 @@ BookShopApplication.java
 - ✅ `GlobalExceptionHandler` для auth ошибок
 - ✅ REST-контроллеры каталога (GET /api/categories, GET /api/books) — Day 3
 - ✅ Cart endpoints + service — Day 4 Part 1
-- 📌 Admin write для books/categories (POST/PUT/DELETE) — Day 4 Part 2
+- ✅ Admin write для books/categories (POST/PUT/DELETE) — Day 4 Part 2
 - 📌 Order checkout со списанием stock — Day 5-6
 - 📌 Frontend Angular 17 — Day 8-10
 
