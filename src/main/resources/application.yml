@@ -28,13 +28,14 @@ spring:
       max-file-size: 5MB
       max-request-size: 5MB
 
-  security:
-    user:
-      name: admin
-      password: admin
-
 server:
   port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-please-change-me-min-32-chars-long-string-required-here-12345}
+    expiration-hours: 24
+    issuer: bookshop
 
 logging:
   level:
