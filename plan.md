@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён. День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5 (Order checkout) — ✅ завершён. День 6 (Order list/detail/cancel/status) — ✅ завершён. День 7+ — в работе.
+> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён. День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5 (Order checkout) — ✅ завершён. День 6 (Order list/detail/cancel/status) — ✅ завершён. День 7 (Frontend setup + Auth + Layout) — ✅ завершён. День 8+ — в работе.
 
 ---
 
@@ -498,31 +498,40 @@ uploads/
 
 ---
 
-### День 7 — Frontend setup + Auth + Layout
-**Цель:** Angular проект собирается, можно зарегистрироваться/залогиниться, видны каталог и корзина (без фильтров).
+### ✅ День 7 (Frontend setup + Auth + Layout) — статус: ЗАВЕРШЁН (2026-06-21)
 
-Файлы (Angular):
-- `bookshop-frontend/` (Angular 17, standalone components, Angular Router, Reactive Forms, HttpClient)
-- `src/app/app.config.ts` — `provideRouter`, `provideHttpClient(withInterceptors([authInterceptor]))`, `provideAnimations`
-- `src/app/core/auth/auth.service.ts` — `login`, `register`, `logout`, `currentUser$` (BehaviorSubject)
-- `src/app/core/auth/auth.interceptor.ts` — подставляет токен
-- `src/app/core/auth/auth.guard.ts`, `role.guard.ts`
-- `src/app/shared/layout/header.component.ts` (логотип, поиск, юзер-меню)
-- `src/app/features/auth/login.component.ts`, `register.component.ts`
-- `src/app/features/catalog/catalog.component.ts` (заглушка — список книг)
-- `src/app/core/api/api.service.ts` — `HttpClient` обёртки (`getBooks()`, `getCategories()`)
-- `src/environments/environment.ts` — `apiUrl: 'http://localhost:8080/api'`
+**Расположение проекта:** `C:\Angular\BookShop-Front\` — **отдельная папка, отдельный git repo**. НЕ внутри Spring backend (`C:\Spring\BookShop\bookshop-frontend/`). Решили так после того как в первой итерации случайно запихнули Angular внутрь Spring репо — удалили, начали заново.
 
-Шаги:
-1. `npx -p @angular/cli@17 ng new bookshop-frontend --routing --style=scss --standalone --skip-git`.
-2. Добавить `bootstrap`: `npm i bootstrap @popperjs/core`. Подключить стили в `angular.json`.
-3. Реализовать `AuthService` с `localStorage` (ключ `bookshop_token`).
-4. `authInterceptor` — functional interceptor: если есть токен — добавить header, если 401 — редирект на `/login`.
-5. Страницы login/register с валидацией Reactive Forms.
-6. `ng serve` — открыть `http://localhost:4200`, проверить сценарий.
-7. `git commit -m "feat(frontend): angular setup, auth, basic layout"`.
+**Что сделано (7 коммитов в `C:\Angular\BookShop-Front\.git`):**
+- **chore: initial Angular 17 setup** — scaffold через `ng new bookshop-frontend --directory=. --routing --style=scss --skip-git --ssr=false`, Bootstrap + @popperjs/core установлены, environment.ts/prod.ts с `apiUrl: 'http://localhost:8080/api'`, минимальный app shell (HttpClient + Router + animations-free)
+- **feat(frontend): AuthService + interceptor + guards** — `signal()` вместо BehaviorSubject, `computed(isAuthenticated, isAdmin)`, token в `localStorage['bookshop_token']`. `authInterceptor` (functional HttpInterceptorFn) — Bearer header + 401 redirect. `authGuard` + `roleGuard` (functional CanActivateFn).
+- **feat(frontend): header layout** — Bootstrap navbar, auth-reactive меню (catalog/cart/orders/admin), login/register кнопки vs username+logout
+- **feat(frontend): login + register pages** — Reactive Forms с валидацией (min 3 username, min 6 password), ошибки из API
+- **feat(frontend): ApiService + catalog stub** — `getBooks(page,size)`, `getBookById(id)`, `getCategories()`. Каталог показывает первую страницу в Bootstrap card grid
+- **fix(frontend): auto-login after register** — backend `/auth/register` возвращает `{id, username, role}` БЕЗ токена. register() теперь `switchMap`-ит в login(), чтобы пользователь был сразу залогинен
 
-**Важно:** из-за CORS backend должен отвечать `Access-Control-Allow-Origin: http://localhost:4200` (настроено в День 2). Если в браузере ошибка — вернуться и поправить.
+**В Spring репо (отдельный коммит):**
+- `chore: remove Angular scaffold from Spring project` — cleanup после первой (неправильной) итерации
+
+**Smoke-test прошёл:**
+- `curl :4200/` → 200, title `BookShop` ✓
+- `curl :4200/main.js` → 200, JS bundle ✓
+- `curl :8080/api/books` → JSON с книгами (русские названия, цены, категории) ✓
+- CORS preflight: `Access-Control-Allow-Origin: http://localhost:4200` ✓
+- Register+login flow: создан пользователь `frontend_test` через curl, token получен, `/api/cart` с токеном → 200 ✓
+
+**Архитектурные решения:**
+1. **Angular в отдельной папке `C:\Angular\BookShop-Front\`** — НЕ submodule, НЕ monorepo. Чистое разделение: Spring = API, Angular = SPA. Каждый имеет свой git, свой CI.
+2. **Angular signals** — не BehaviorSubject. `signal()`, `computed()`, `asReadonly()` — идиоматично для Angular 17.
+3. **Functional interceptors/guards** — `HttpInterceptorFn` и `CanActivateFn` с `inject()` внутри. Современный стиль.
+4. **Без provideAnimations** — Bootstrap не требует (план явно запретил).
+5. **DTO под реальный backend** — `PageResponse.page` (не `number`), `AuthResponse` flat (не nested `user`).
+6. **Auto-login after register** на фронте (а не менять backend) — минимальное изменение, UX без разрывов.
+
+**Гэп с исходным планом:**
+- ❌ Юнит-тесты на Karma+Chrome — Chrome не в PATH на этой машине, build-верификация основная. 2 теста написаны (`auth.service.spec.ts`), запуск отложен.
+- ⚠️ Расположение: план предполагал `C:\Spring\BookShop\bookshop-frontend/`, фактически — `C:\Angular\BookShop-Front\`. Решение принято пользователем после первой (неудачной) итерации.
+- ⚠️ `provideAnimations` в плане — НЕ добавлен (план сам же запретил в разделе решений).
 
 ---
 

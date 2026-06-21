@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **JWT role invariant:** `JwtService` хранит role **без** `ROLE_` префикса, фильтр добавляет `ROLE_` сам. `.hasRole("ADMIN")` работает корректно. Не ломай этот контракт.
 - **Не редактируй применённые миграции** (V1, V2) — пиши новую `V{N+1}__*.sql`.
 - **API доки:** Swagger UI на `http://localhost:8080/swagger-ui/index.html` (НЕ `/swagger-ui.html`).
-- **День 1-4 Part 1 ✅, День 4 Part 2 ✅, День 5 ✅** (Order checkout) — см. `plan.md` status block.
+- **День 1-4 Part 1 ✅, День 4 Part 2 ✅, День 5 ✅ (Order checkout), День 6 ✅, День 7 ✅ (Frontend setup)** — см. `plan.md` status block.
 
 ## Стек
 
@@ -108,8 +108,15 @@ BookShopApplication.java
 - ✅ Admin write для books/categories (POST/PUT/DELETE) — Day 4 Part 2
 - ✅ Order checkout (POST /api/orders) со списанием stock — Day 5
 - ✅ Order list/detail/cancel/status (GET, GET by id, PATCH, DELETE) — Day 6
-- 📌 Observability (RequestLoggingFilter, логирование) — Day 6 (rescheduled)
-- 📌 Frontend Angular 17 — Day 8-10
+- ✅ Frontend Angular 17 setup + Auth + Layout (в `C:\Angular\BookShop-Front\`) — Day 7
+- 📌 Observability (RequestLoggingFilter, логирование) — rescheduled
+- 📌 Frontend catalog full + cart + checkout — Day 8
+- 📌 Admin-страницы + Docker всего стека — Day 9
+- 📌 Отчёт + диагностика + нагрузочный smoke — Day 10
+
+## Frontend (отдельный проект)
+
+**`C:\Angular\BookShop-Front\`** — НЕ внутри Spring репо, свой git. Angular 17 standalone, signals, functional interceptors/guards, Bootstrap 5. Запуск: `cd C:\Angular\BookShop-Front && npx ng serve --port 4200`. Backend URL: `http://localhost:8080/api` (в `src/environments/environment.ts`). CORS для `http://localhost:4200` уже разрешён в `SecurityConfig`.
 
 ## Файлы, которые не трогаем
 
