@@ -41,6 +41,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/auth/**",
                     "/actuator/health",
+                    "/seed-covers/**",
+                    "/uploads/**",
                     "/v3/api-docs/**",
                     "/v3/api-docs",
                     "/v3/api-docs.yaml",
