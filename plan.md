@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Статус по дням:** День 1 — ✅ завершён (см. блок в конце Дня 1). День 2+ — в работе.
+> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён (см. блок в конце Дня 2). День 3+ — в работе.
 
 ---
 
@@ -338,6 +338,32 @@ uploads/
 10. `git commit -m "feat(user): registration, login, JWT auth"`.
 
 **Проверка:** через `curl` или Postman — register, login, получить токен, вызвать `/api/auth/me` с заголовком.
+
+---
+
+### ✅ День 2 — статус: ЗАВЕРШЁН (2026-06-21)
+
+**Что сделано:**
+- **Spring Security:** `SecurityConfig` (BCrypt strength 10, stateless, CORS для `http://localhost:4200`), `JwtAuthenticationFilter` (`ROLE_` prefix в `SimpleGrantedAuthority`), `JwtService` (jjwt 0.12.6, HS256, min 32 bytes secret)
+- **Auth endpoints:** `POST /api/auth/register` (201) + `POST /api/auth/login` (200 + JWT) — через Api+Impl pattern
+- **Сервисный слой:** `UserService.register(...)` + `AuthService.login(...)` с `@Transactional` boundaries; BCrypt хеширование паролей
+- **DTO + MapStruct:** `UserDto`, `LoginRequest`, `RegisterRequest`, `AuthResponse`, `UserDetailsImpl`; `UserMapper` через MapStruct 1.6.3
+- **Error handling:** `GlobalExceptionHandler` для 400/401/403/404/409 → единый `ApiError` JSON
+- **Flyway V3:** фикс сломанного bcrypt-хеша в V2 (admin/ivan теперь могут логиниться с паролем `password`)
+- **Тесты:** 5 unit (`JwtServiceTest`) + 4 unit (`UserServiceTest` с Mockito) + 5 integration (`AuthControllerIntegrationTest` с Testcontainers+MockMvc) = **15 тестов, BUILD SUCCESSFUL**
+- **Swagger UI:** springdoc-openapi 3.0.3, доступен на `http://localhost:8080/swagger-ui/index.html` с JWT Bearer auth scheme (кнопка Authorize)
+- **Документация:** CLAUDE.md обновлён (security ✅ done, MapStruct в стеке, "Что осталось" обновлён)
+
+**Архитектурные решения (отступления от исходного плана):**
+- ❌ Не сделано: `GET /api/auth/me` — перенесён в День 3 (нет смысла делать изолированно, нужен для фронта с контекстом других endpoints)
+- ⚠️ Api+Impl pattern (из cloud-storage): `AuthApi` interface + `AuthController` impl — единообразно с другими контроллерами проекта
+- ⚠️ `MapStruct` 1.6.3 использован для маппинга (изначально план был «ручные мапперы» — пересмотрели в сторону MapStruct для type safety)
+- ⚠️ `springdoc-openapi` подключён уже в День 2 (а не в День 6) — для ручного тестирования через Swagger UI
+- ⚠️ `application.yml` хранит JWT-секрет с дефолтом, переопределяется через `JWT_SECRET` env var
+
+**Что НЕ сделано** (перенесено):
+- `GlobalExceptionHandler` ещё не покрывает 422 (бизнес-валидация вроде insufficient stock) — добавим когда появятся соответствующие исключения в Day 4-5
+- `@PreAuthorize("hasRole('ADMIN')")` не расставлен — нет защищаемых эндпоинтов в коде, добавим в День 4 когда появятся POST/PUT/DELETE на `/api/books` и `/api/categories`
 
 ---
 

@@ -13,9 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Backend:** Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security + Spring WebMVC
 - **БД:** PostgreSQL 16 (через `compose.yaml`)
 - **Миграции:** Flyway (`flyway-core` + `flyway-database-postgresql`)
-- **Auth:** JWT (jjwt), BCrypt (планируется)
+- **Auth:** JWT (jjwt 0.12.6), BCrypt (strength 10)
+- **Mappers:** MapStruct 1.6.3 (с `lombok-mapstruct-binding`)
+- **API docs:** springdoc-openapi 3.0.3 (Swagger UI на `/swagger-ui/index.html`)
 - **Frontend:** Angular 17 standalone + Bootstrap 5 (планируется, папка `bookshop-frontend/`)
-- **Тесты:** JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend)
+- **Тесты:** JUnit 5 + Mockito + Testcontainers (backend), Jasmine/Karma (frontend)
 
 ## Субагенты
 
@@ -27,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `repository-agent` | Создание `JpaRepository` или кастомных `@Query` | "Добавь поиск книг по диапазону цены" |
 | `service-agent` | Бизнес-логика, `@Transactional` | "Сервис оформления заказа со списанием stock" |
 | `controller-agent` | Создание REST эндпоинтов | "POST /api/books для админа" |
-| `dto-mapper-agent` | DTO records + ручные мапперы | "Создай BookDto и BookMapper" |
+| `dto-mapper-agent` | DTO records + MapStruct мапперы | "Создай BookDto и BookMapper" |
 | `security-agent` | Spring Security, JWT, BCrypt, CORS | "Настрой SecurityFilterChain" |
 | `migration-agent` | Flyway V*__*.sql миграции | "Добавь таблицу reviews" |
 | `test-agent` | JUnit 5 + Mockito + Testcontainers | "Тест OrderService.create" |
@@ -130,16 +132,16 @@ BookShopApplication.java   точка входа
 
 ## Что осталось (по плану)
 
-- Spring Security (JWT, BCrypt, CORS для Angular на 4200)
-- REST-контроллеры + DTO + ручные мапперы
-- Сервисный слой с `@Transactional` (особенно для Order — списание stock)
-- Глобальный обработчик ошибок (`GlobalExceptionHandler`)
+- ✅ Spring Security (JWT, BCrypt, CORS для Angular на 4200) — **сделано (Day 2)**
+- REST-контроллеры для каталога/корзины/заказов (Day 3+)
+- Сервисный слой с `@Transactional` для каталога/корзины/заказов (особенно Order — списание stock)
+- Глобальный обработчик ошибок (`GlobalExceptionHandler`) — **частично сделан** (auth, нужен расширить под каталог/заказы)
 - Frontend на Angular
 
 ## Стиль кода
 
 - Lombok аннотации на класс — стандартный набор как в `Book.java`.
-- Мапперы Entity ↔ DTO — **ручные**, не MapStruct.
+- Мапперы Entity ↔ DTO — **MapStruct** (см. `mapper/UserMapper.java`).
 - DTO — отдельные record-классы или обычные классы в подпакете `dto/`.
 - Названия пакетов lowercase, классы PascalCase, методы camelCase.
 - Все новые REST-эндпоинты — под `/api/...`. Ошибки — единый формат `ApiError` (см. план).

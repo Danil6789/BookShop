@@ -23,6 +23,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+springdoc:
+  swagger-ui:
+    persist-authorization: true
+    with-credentials: true
+
   servlet:
     multipart:
       max-file-size: 5MB
