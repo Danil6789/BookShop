@@ -7,10 +7,12 @@ import org.example.bookshop.entity.Book;
 import org.example.bookshop.entity.CartItem;
 import org.example.bookshop.entity.Order;
 import org.example.bookshop.entity.OrderItem;
+import org.example.bookshop.entity.OrderStatus;
 import org.example.bookshop.entity.User;
 import org.example.bookshop.exception.order.EmptyCartException;
 import org.example.bookshop.exception.order.InsufficientStockException;
 import org.example.bookshop.exception.order.OrderAccessDeniedException;
+import org.example.bookshop.exception.order.OrderNotCancellableException;
 import org.example.bookshop.exception.order.OrderNotFoundException;
 import org.example.bookshop.mapper.OrderItemMapper;
 import org.example.bookshop.mapper.OrderMapper;
@@ -107,6 +109,37 @@ public class OrderService {
             throw new OrderAccessDeniedException();
         }
         return toDto(order);
+    }
+
+    @Transactional
+    public OrderDto updateStatus(Long orderId, OrderStatus newStatus) {
+        log.debug("Update order id={} status to {}", orderId, newStatus);
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(orderId));
+        order.setStatus(newStatus);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
+    }
+
+    @Transactional
+    public OrderDto cancelOrder(User user, Long orderId) {
+        log.debug("Cancel order id={} for user={}", orderId, user.getId());
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUser().getId().equals(user.getId()) && user.getRole() != User.Role.ADMIN) {
+            throw new OrderAccessDeniedException();
+        }
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new OrderNotCancellableException(orderId, order.getStatus().name());
+        }
+        for (OrderItem item : order.getItems()) {
+            Book book = item.getBook();
+            book.setStock(book.getStock() + item.getQuantity());
+            bookRepository.save(book);
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
     private OrderDto toDto(Order order) {

@@ -10,6 +10,7 @@ import org.example.bookshop.entity.User;
 import org.example.bookshop.exception.order.EmptyCartException;
 import org.example.bookshop.exception.order.InsufficientStockException;
 import org.example.bookshop.exception.order.OrderAccessDeniedException;
+import org.example.bookshop.exception.order.OrderNotCancellableException;
 import org.example.bookshop.exception.order.OrderNotFoundException;
 import org.example.bookshop.mapper.OrderItemMapper;
 import org.example.bookshop.mapper.OrderMapper;
@@ -310,6 +311,87 @@ class OrderServiceTest {
         assertThatThrownBy(() -> service.getOrderById(ivan, 999L))
             .isInstanceOf(OrderNotFoundException.class)
             .hasMessageContaining("999");
+    }
+
+    @Test
+    void updateStatus_existingOrder_updatesAndSaves() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        order.getItems().add(OrderItem.builder().order(order).book(book).quantity(1)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderDto result = service.updateStatus(1L, OrderStatus.PAID);
+
+        assertThat(result.getStatus()).isEqualTo("PAID");
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void updateStatus_missingOrder_throwsNotFound() {
+        when(orderRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateStatus(999L, OrderStatus.PAID))
+            .isInstanceOf(OrderNotFoundException.class)
+            .hasMessageContaining("999");
+
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void cancel_ownPendingOrder_restoresStockAndUpdatesStatus() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        book.setStock(7);
+        Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("1300.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        order.getItems().add(OrderItem.builder().order(order).book(book).quantity(3)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderDto result = service.cancelOrder(ivan, 1L);
+
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(book.getStock()).isEqualTo(10);
+        verify(bookRepository).save(book);
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void cancel_otherUserOrder_throwsAccessDenied() {
+        User petr = User.builder().id(3L).username("petr").role(User.Role.USER).build();
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PENDING).items(new java.util.ArrayList<>()).build();
+        order.getItems().add(OrderItem.builder().order(order).book(book).quantity(1)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> service.cancelOrder(petr, 1L))
+            .isInstanceOf(OrderAccessDeniedException.class);
+
+        verify(bookRepository, never()).save(any(Book.class));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void cancel_nonPendingOrder_throwsNotCancellable() {
+        Book book = book(1L, "Мастер и Маргарита", "650.00");
+        Order order = Order.builder().id(1L).user(ivan).totalAmount(new BigDecimal("650.00"))
+            .status(OrderStatus.PAID).items(new java.util.ArrayList<>()).build();
+        order.getItems().add(OrderItem.builder().order(order).book(book).quantity(1)
+            .priceAtPurchase(new BigDecimal("650.00")).build());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> service.cancelOrder(ivan, 1L))
+            .isInstanceOf(OrderNotCancellableException.class)
+            .hasMessageContaining("id=1")
+            .hasMessageContaining("PAID");
+
+        verify(bookRepository, never()).save(any(Book.class));
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     private static Book book(Long id, String title, String price) {
