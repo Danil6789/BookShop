@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.bookshop.controller.BookApi;
 import org.example.bookshop.dto.catalog.BookDto;
 import org.example.bookshop.dto.catalog.BookFilterRequest;
+import org.example.bookshop.dto.catalog.BookRequest;
 import org.example.bookshop.dto.catalog.PageResponse;
 import org.example.bookshop.service.catalog.BookService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,5 +52,22 @@ public class BookController implements BookApi {
     @Override
     public ResponseEntity<BookDto> findById(@PathVariable Long id) {
         return ResponseEntity.ok(service.findById(id));
+    }
+
+    @Override
+    public ResponseEntity<BookDto> create(BookRequest request) {
+        BookDto created = service.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @Override
+    public ResponseEntity<BookDto> update(Long id, BookRequest request) {
+        return ResponseEntity.ok(service.update(id, request));
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
