@@ -109,10 +109,9 @@ BookShopApplication.java
 - ✅ Order checkout (POST /api/orders) со списанием stock — Day 5
 - ✅ Order list/detail/cancel/status (GET, GET by id, PATCH, DELETE) — Day 6
 - ✅ Frontend Angular 17 setup + Auth + Layout (в `C:\Angular\BookShop-Front\`) — Day 7
+- ✅ Frontend complete (catalog filters + book detail + cart + checkout + orders + admin pages) — Day 8
 - 📌 Observability (RequestLoggingFilter, логирование) — rescheduled
-- 📌 Frontend catalog full + cart + checkout — Day 8
-- 📌 Admin-страницы + Docker всего стека — Day 9
-- 📌 Отчёт + диагностика + нагрузочный smoke — Day 10
+- 📌 Docker всего стека + e2e Playwright — по запросу
 
 ## Frontend (отдельный проект)
 

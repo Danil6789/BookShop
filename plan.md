@@ -4,7 +4,7 @@
 >
 > **Стек:** Backend — Java 21 + Spring Boot 4.1.0 + Spring Data JPA + Spring Security (JWT) + Flyway. Frontend — Angular 17 (standalone components). БД — PostgreSQL 16. Сборка backend+БД — Docker Compose. Тесты — JUnit 5 + Testcontainers (backend), Jasmine/Karma (frontend).
 
-> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён. День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5 (Order checkout) — ✅ завершён. День 6 (Order list/detail/cancel/status) — ✅ завершён. День 7 (Frontend setup + Auth + Layout) — ✅ завершён. День 8+ — в работе.
+> **Статус по дням:** День 1 — ✅ завершён. День 2 — ✅ завершён. День 3 — ✅ завершён. День 4 Part 1 (Cart) — ✅ завершён. День 4 Part 2 (Admin write) — ✅ завершён. День 5 (Order checkout) — ✅ завершён. День 6 (Order list/detail/cancel/status) — ✅ завершён. День 7 (Frontend setup + Auth + Layout) — ✅ завершён. **День 8 (Frontend complete + project finalization) — ✅ завершён.**
 
 ---
 
