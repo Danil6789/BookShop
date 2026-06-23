@@ -35,6 +35,9 @@ springdoc:
 
 server:
   port: 8080
+  servlet:
+    session:
+      store-dir: ${java.io.tmpdir}/bookshop-sessions
 
 app:
   jwt:
