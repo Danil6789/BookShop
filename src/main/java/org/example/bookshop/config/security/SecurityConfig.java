@@ -63,9 +63,18 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint unauthorizedEntryPoint() {
         return (request, response, authException) -> {
+            String jwtError = (String) request.getAttribute(JwtAuthenticationFilter.JWT_ERROR_ATTR);
+            String message;
+            if (JwtAuthenticationFilter.JWT_ERROR_EXPIRED.equals(jwtError)) {
+                message = "Срок действия токена истёк, войдите заново";
+            } else if (JwtAuthenticationFilter.JWT_ERROR_INVALID.equals(jwtError)) {
+                message = "Невалидный токен авторизации";
+            } else {
+                message = "Требуется аутентификация";
+            }
             response.setStatus(401);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"status\":401,\"message\":\"Требуется аутентификация\"}");
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
         };
     }
 
